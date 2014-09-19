@@ -1,0 +1,46 @@
+{
+  "name": "azure-event-hub",
+  "version": "1.0.0",
+  "description": "azure-event-hub",
+  "main": "eventHubClient.js",
+  "engines": {
+    "node": ">= 0.8.19"
+  },
+  "dependencies": {
+    "amqplib": "^0.2.1",
+    "request": "^2.44.0",
+    "utf8": "^2.0.0"
+  },
+  "devDependencies": {
+    "grunt": "^0.4.5",
+    "grunt-contrib-jshint": "^0.10.0",
+    "grunt-simple-mocha": "^0.4.0",
+    "mocha": "^1.21.4",
+    "should": "^4.0.4"
+  },
+  "scripts": {},
+  "author": {
+    "name": "noodlefrenzy",
+    "email": "milanz@microsoft.com",
+    "url": "http://www.mikelanzetta.com"
+  },
+  "homepage": "https://github.com/noodlefrenzy/azure-event-hub",
+  "licenses": [
+    "Apache-2.0"
+  ],
+  "keywords": [
+    "azure",
+    "eventhub",
+    "amqp",
+    "messaging"
+  ],
+  "files": [
+    "eventHubClient.js",
+    "readme.md",
+    "LICENSE"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/noodlefrenzy/azure-event-hub"
+  }
+}
