@@ -3,6 +3,4 @@ var tokenGen = require('./lib/saToken.js'),
 
 module.exports.createToken = tokenGen.create;
 
-module.exports.createHubIfNotExists = client.createHubIfNotExists;
-
-module.exports.sendMessage = client.send;
+module.exports.restClient = client.create;
