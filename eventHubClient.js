@@ -1,37 +1,22 @@
-var crypto = require('crypto');
-var utf8 = require('utf8');
 
-var namespace = 'hub-ns',
-    hubName = 'hub',
-    sasName = '[SAS-Name]',
-    sasKey = '[SAS-Key]',
-    sbUriSuffix = '?timeout=60&api-version=2014-01';
+var request = require('request'),
+    saToken = require('./saToken.js'),
+    serviceBusUriSuffix = '?timeout=60&api-version=2014-01';
 
-function createSasToken(options) {
-    var uri = 'https://' + options.namespace +
-        '.servicebus.windows.net/' + options.hubName + '/';
-
-    var encoded = encodeURIComponent(uri);
-    
-    var epoch = new Date(1970, 1, 1, 0, 0, 0, 0);
-    var now = new Date();
-    var year = 365 * 24 * 60 * 60;
-    var ttl = ((now.getTime() - epoch.getTime()) / 1000) + (year * 5);
-
-    var signature = encoded + '\n' + ttl;
-    var signatureUTF8 = utf8.encode(signature);
-    var hash = crypto.createHmac('sha256', options.sasKey).update(signatureUTF8).digest('base64');
-
-    return 'SharedAccessSignature sr=' + encoded + '&sig=' + 
-        encodeURIComponent(hash) + '&se=' + ttl + '&skn=' + options.sasName; 
-}
-
-var request = require('request');
-
-function createAHub(options) {
-    var token = createSasToken(options);
-    var uri = 'https://' + options.namespace + '.servicebus.windows.net/' +
-        options.hubName + sbUriSuffix;
+/**
+ * Creates a new EventHub, with no creation options yet.  WORK IN PROGRESS.
+ *
+ * @param {string} namespace    The ServiceBus Namespace to use.
+ * @param {string} hubName      The EventHub name.
+ * @param {string} saName       The Shared Access Policy name.
+ * @param {string} saKey        The Shared Access Policy key.
+ * @param {function} success    The callback for success, takes a single boolean - true if hub was created by the call, false if it already existed.
+ * @param {function} [error]    The callback for failure.  Takes an "error" and a response status code.
+ */
+function createHubIfNotExists(namespace, hubName, saName, saKey, success, error) {
+    var token = saToken.create(namespace, hubName, saName, saKey);
+    var uri = 'https://' + namespace + '.servicebus.windows.net/' +
+        hubName + serviceBusUriSuffix;
     var body = '' + 
 '<entry xmlns="http://www.w3.org/2005/Atom">'+
 '  <content type="application/xml">'+
@@ -47,19 +32,25 @@ function createAHub(options) {
             'Authorization' : token
         },
         'body': body
-    }, function (error, response, body) {
-        if (!error && response.statusCode === 201) {
-            console.log('Successfully created hub ' + options.hubName);
+    }, function (err, response, body) {
+        if (!err && response.statusCode === 201) {
+            success(true);
         } else {
-            console.log('Failed to create hub '+options.hubName+': '+error+', Status: '+response.statusCode+', Body: '+body);
+            if (response.statusCode === 409) {
+                success(false);
+            } else {
+                if (error) {
+                    error(err, response.statusCode);
+                }
+            }
         }
     });
 }
 
-function postAMessage(options) {
-    var token = createSasToken(options);
-    var uri = 'https://' + options.namespace + '.servicebus.windows.net/' +
-        options.hubName + '/messages' + sbUriSuffix;
+function postAMessage(namespace, hubName, saName, saKey) {
+    var token = createSasToken(namespace, hubName, saName, saKey);
+    var uri = 'https://' + namespace + '.servicebus.windows.net/' +
+        hubName + '/messages' + serviceBusUriSuffix;
     var body = '{ "DeviceId": "laptop", "Message": "Paging Dr. Feelgood" }';
     request({
         'uri': uri,
@@ -71,21 +62,25 @@ function postAMessage(options) {
         'body': body
     }, function (error, response, body) {
         if (!error && response.statusCode === 201) {
-            console.log('Successfully posted message to hub ' + options.hubName);
+            console.log('Successfully posted message to hub ' + hubName);
         } else {
-            console.log('Failed to post message to hub '+options.hubName+': '+error+', Status: '+response.statusCode+', Body: '+body);
+            console.log('Failed to post message to hub '+hubName+': '+error+', Status: '+response.statusCode+', Body: '+body);
         }
     });
 }
 
 //postAMessage({ 'namespace': namespace, 'hubName': hubName, 'sasName': sasName, 'sasKey': sasKey });
 
-var amqp = require('amqplib');
+var amqplib = require('amqplib');
 
-function postWithAmqp(options) {
-    var token = createSasToken(options);
-    var amqpUri = 'amqp://'+options.namespace+'.servicebus.windows.net/;'+token+';TransportType=Amqp';
-    amqp.connect(amqpUri, function (err, conn) {
+function postWithAmqplib(namespace, hubName, saName, saKey) {
+    var user = saName,
+        pass = encodeURIComponent(saKey),
+        amqpUri = 'amqps://'+user+':'+pass+'@'+
+            namespace+'.servicebus.windows.net';
+
+    console.log('Trying to connect to '+amqpUri);
+    amqplib.connect(amqpUri, function (err, conn) {
         if (err) {
             console.warn('Failed to connect: '+err+' to '+amqpUri);
         } else {
@@ -101,4 +96,29 @@ function postWithAmqp(options) {
     });
 }
 
-postWithAmqp({ 'namespace': namespace, 'hubName': hubName, 'sasName': sasName, 'sasKey': sasKey });
+var amqp = require('amqp');
+
+function postWithAmqp(namespace, hubName, saName, saKey) {
+    var user = saName,
+        pass = encodeURIComponent(saKey),
+        amqpUri = 'amqps://'+user+':'+pass+'@'+
+            namespace+'.servicebus.windows.net/';
+
+    console.log('Trying to connect to '+amqpUri);
+    var conn = amqp.createConnection(amqpUri);
+    conn.on('ready', function() {
+        console.log('Connected');
+        connection.exchange(hubName, { confirm: true }, function(e) {
+            console.log('Exchange created');
+            e.publish('', new Buffer('Howdy'), function (err) {
+                if (err) {
+                    console.warn('Failed to send.');
+                } else {
+                    console.log('Sent');
+                }
+            });
+        });
+    });
+}
+
+//postWithAmqplib(namespace, hubName, sasName, sasKey);
