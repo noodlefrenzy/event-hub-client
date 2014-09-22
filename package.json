@@ -1,8 +1,8 @@
 {
-  "name": "azure-event-hub",
+  "name": "event-hub-client",
   "version": "1.0.0",
-  "description": "azure-event-hub",
-  "main": "eventHubClient.js",
+  "description": "Simple client for Azure EventHub in Node",
+  "main": "restClient.js",
   "engines": {
     "node": ">= 0.8.19"
   },
@@ -25,7 +25,7 @@
     "email": "milanz@microsoft.com",
     "url": "http://www.mikelanzetta.com"
   },
-  "homepage": "https://github.com/noodlefrenzy/azure-event-hub",
+  "homepage": "https://github.com/noodlefrenzy/event-hub-client",
   "licenses": [
     "Apache-2.0"
   ],
@@ -36,13 +36,15 @@
     "messaging"
   ],
   "files": [
-    "eventHubClient.js",
-    "saToken.js",
+    "index.js",
+    "lib/saToken.js",
+    "lib/amqpClient.js",
+    "lib/restClient.js",
     "readme.md",
     "LICENSE"
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/noodlefrenzy/azure-event-hub.git"
+    "url": "https://github.com/noodlefrenzy/event-hub-client.git"
   }
 }
