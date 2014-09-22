@@ -5,11 +5,13 @@ Simple Azure EventHub Client.  Uses REST API for Create/Send operations, trying 
 
 ## Usage
 
-
     function demonstrateEventHubSend() {
-    }
-
-    function demonstrateEventHubReceive() {
+        var client = require('event-hub-client').restClient(
+            serviceBusNamespace,
+            eventHubName,
+            sharedAccessKeyName,
+            sharedAccessKey);
+        client.sendMessage('{ "device": "laptop", "message": "My message body." }');
     }
 
 ## Caveats
@@ -18,11 +20,15 @@ Simple Azure EventHub Client.  Uses REST API for Create/Send operations, trying 
 
 ## Installation
 
-Installs via *npm*:
+Currently not a registered *npm* module, so add it to your package.json as a GitHub-based dependency:
 
 ```
-npm install event-hub-client
+    "dependencies": {
+        "event-hub-client": "noodlefrenzy/event-hub-client"
+      },
 ```
+
+Then you can just run ```npm install``` to install it.
 
 ## License
 
