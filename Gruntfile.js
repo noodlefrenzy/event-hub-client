@@ -14,12 +14,20 @@ module.exports = function(grunt) {
         jshint: {
             all: [ 'Gruntfile.js', '*.js', 'test/**/*.js']
         },
+
+        jsdoc: {
+            all: {
+                src: ['*.js', 'test/**/*.js'],
+                dest: 'doc'
+            }
+        }
     });
 
     grunt.loadNpmTasks('grunt-contrib-jshint');
     grunt.loadNpmTasks('grunt-simple-mocha');
+    grunt.loadNpmTasks('grunt-jsdoc');
 
     grunt.registerTask('test', ['simplemocha']);
 
-    grunt.registerTask('build', ['jshint', 'test']);
+    grunt.registerTask('build', ['jshint', 'test', 'jsdoc']);
 };
